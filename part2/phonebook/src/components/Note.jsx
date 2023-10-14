@@ -13,7 +13,7 @@ const Note = ({ persons, del, query }) => {
       {filteredPersons.map((person) => (
         <p key={person.id}>
           {person.name} {person.number}{" "}
-          <button id={person.id} onClick={del} type="submit">
+          <button onClick={() => del(person.id, person.name)} type="submit">
             Delete
           </button>
         </p>

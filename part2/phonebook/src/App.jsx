@@ -19,12 +19,26 @@ const App = () => {
     };
 
     const check = persons.map((person) => person.name === personObject.name);
-    check.includes(true)
-      ? alert(`${newName} is already added to phonebook`)
-      : phoneService
-          .create(personObject)
-          .then((response) => setPersons(persons.concat(response)));
-
+    if (check.includes(true)) {
+      const temp = persons.find((e) => e.name == personObject.name);
+      confirm(
+        `${personObject.name} is already added to phonebook, replace the old number with a new one?`
+      )
+        ? phoneService
+            .update(temp.id, personObject)
+            .then((response) =>
+              setPersons(
+                persons.map((person) =>
+                  person.id != temp.id ? person : response
+                )
+              )
+            )
+        : null;
+    } else {
+      phoneService
+        .create(personObject)
+        .then((response) => setPersons(persons.concat(response)));
+    }
     setNewName("");
     setNewNumber("");
   };
@@ -43,13 +57,13 @@ const App = () => {
     }
   };
 
-  const delPerson = (event) => {
-    console.log(event.target.id);
-
-    const res = phoneService.remove(event.target.id);
-    res.then(
-      () => console.log("promise completed"),
-      setPersons(persons.filter((person) => person.id !== event.target.id))
+  const delPerson = (id, name) => {
+    console.log(id, name);
+    const res = phoneService.remove(id);
+    res.then(() =>
+      confirm(`Delete ${name}`)
+        ? setPersons(persons.filter((person) => person.id != id))
+        : console.log("not deleted")
     );
     console.log(persons);
   };
