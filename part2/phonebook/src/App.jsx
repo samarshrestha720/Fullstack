@@ -3,13 +3,14 @@ import Note from "./components/Note";
 import Form from "./components/Form";
 import Filter from "./components/Filter";
 import phoneService from "./services/phones";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [query, setQuery] = useState("");
-  const [update, setUpdate] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   const addPerson = (event) => {
     event.preventDefault();
@@ -21,23 +22,33 @@ const App = () => {
     const check = persons.map((person) => person.name === personObject.name);
     if (check.includes(true)) {
       const temp = persons.find((e) => e.name == personObject.name);
-      confirm(
-        `${personObject.name} is already added to phonebook, replace the old number with a new one?`
-      )
-        ? phoneService
-            .update(temp.id, personObject)
-            .then((response) =>
-              setPersons(
-                persons.map((person) =>
-                  person.id != temp.id ? person : response
-                )
+      if (
+        confirm(
+          `${personObject.name} is already added to phonebook, replace the old number with a new one?`
+        )
+      ) {
+        phoneService
+          .update(temp.id, personObject)
+          .then((response) =>
+            setPersons(
+              persons.map((person) =>
+                person.id != temp.id ? person : response
               )
             )
-        : null;
+          )
+          .then(setErrorMsg(`Updated ${personObject.name}`))
+          .catch(
+            () => console.log("error at update promise"),
+            setErrorMsg(
+              `Information of ${personObject.name} already removed from the server`
+            )
+          );
+      }
     } else {
       phoneService
         .create(personObject)
         .then((response) => setPersons(persons.concat(response)));
+      setErrorMsg(`Added ${personObject.name}`);
     }
     setNewName("");
     setNewNumber("");
@@ -63,7 +74,7 @@ const App = () => {
     res.then(() =>
       confirm(`Delete ${name}`)
         ? setPersons(persons.filter((person) => person.id != id))
-        : console.log("not deleted")
+        : null
     );
     console.log(persons);
   };
@@ -75,6 +86,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMsg} />
       <Filter query={query} inputChange={inputChange} />
       <h3>Add new</h3>
       <Form
